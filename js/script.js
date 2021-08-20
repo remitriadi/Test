@@ -270,13 +270,17 @@ for(let i = 1; i <= (increment * increment); i++){
     const image_number = String(i)
     const update_filename = filename_daylight.substring(0, filename_daylight.length - image_number.length) + image_number
     const final_filename = update_filename + '.webp'
-    try{
-        textures360_daylight[i] = texture_loader.load(final_filename) 
-    }
-    catch(err){
-
-    }
-    textures360[i] = textures360_daylight[i]
+    textures360_daylight[i] = texture_loader.load(
+        final_filename,
+        function(){
+            textures360[i] = textures360_daylight[i]
+        },
+        undefined,
+        function(err){
+            console.log('error')
+        }
+        ) 
+    
 }
 
 //Night
@@ -284,13 +288,17 @@ for(let i = 1; i <= (increment * increment); i++){
     const image_number = String(i)
     const update_filename = filename_night.substring(0, filename_night.length - image_number.length) + image_number
     const final_filename = update_filename + '.webp'
-    try{
-
-        textures360_night[i] = texture_loader_wo_load.load(final_filename)  
-    }
-    catch(err){
-
-    }
+    textures360_night[i] = texture_loader_wo_load.load(final_filename) 
+    textures360_night[i] = texture_loader_wo_load.load(
+        final_filename,
+        function(){
+            console.log('yes')
+        },
+        undefined,
+        function(err){
+            console.log('error')
+        }
+        )  
 }
 
 //Depth
@@ -298,13 +306,16 @@ for(let i = 1; i <= (increment * increment); i++){
     const image_number = String(i)
     const update_filename = filename_depth.substring(0, filename_depth.length - image_number.length) + image_number
     const final_filename = update_filename + '.png'
-    try{
-
-        textures360_depth[i] = texture_loader.load(final_filename)  
-    }
-    catch(err){
-
-    }
+    textures360_depth[i] = texture_loader.load(
+        final_filename,
+        function(){
+            textures360[i] = textures360_depth[i]
+        },
+        undefined,
+        function(err){
+            console.log('error')
+        }
+        )  
 }
 
 //Load textures
