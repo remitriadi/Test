@@ -10,7 +10,6 @@ html {
 
 body {
   box-sizing: border-box;
-  cursor: hidden;
   height: 100vh;
   font-family: "Manrope", Arial, Helvetica, sans-serif;
   overflow: hidden;
@@ -31,9 +30,6 @@ body {
 /* UI */
 
 .ui {
-  position: fixed;
-  z-index: 2147483647;
-  opacity: 0;
 }
 
 #loading--bar {
@@ -61,6 +57,11 @@ body {
 }
 
 /* Icon */
+.icon {
+  position: fixed;
+  z-index: 2147483647;
+  opacity: 0;
+}
 
 .icon__mini {
   transition: transform 0.3s;

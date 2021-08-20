@@ -45035,7 +45035,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
  */
 var canvas = document.querySelector('canvas.webgl'); //  ------------------------------------------------EDIT VARIABLE--------------------------------------------------------
 
-var displace_strength = 7;
+var displace_strength = 15;
 var base_position = {
   x: 13,
   y: 1.6,
@@ -45054,6 +45054,9 @@ var filename_night = '/images/night/Image0000'; // Filename path for night scene
 var filename_depth = '/images/depth/Image0000'; // Filename path for depth scene, name always start from 0
 //  ------------------------------------------------EDIT VARIABLE--------------------------------------------------------
 
+var count = 0;
+var object_ray_array = [];
+var is_mouse_on_pet = false;
 /**
  * Raycaster
  */
@@ -45072,6 +45075,7 @@ var display_element = document.querySelector('canvas.display');
 var loading_manager = new THREE.LoadingManager( // Loaded
 function () {
   window.setTimeout(function () {
+    // Load UI
     _gsap.default.to(display_element.style, {
       opacity: 1,
       duration: 3
@@ -45086,14 +45090,93 @@ function () {
     try {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var ui = _step.value;
-        ui.style.opacity = 0.4;
-      }
+        ui.style.opacity = 0.9;
+      } // Emptying texture if file isn't in folder
+
     } catch (err) {
       _iterator.e(err);
     } finally {
       _iterator.f();
     }
-  }, 500);
+
+    function emptying(texture_array) {
+      count = 0;
+
+      var _iterator2 = _createForOfIteratorHelper(texture_array),
+          _step2;
+
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var texture = _step2.value;
+
+          if (texture) {
+            if (!texture.image) {
+              texture_array[count] = null;
+            }
+          }
+
+          count += 1;
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+
+      var _iterator3 = _createForOfIteratorHelper(texture_array),
+          _step3;
+
+      try {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var _texture = _step3.value;
+
+          if (_texture) {
+            _texture.minFilter = THREE.NearestFilter;
+            _texture.generateMipmaps = false;
+            _texture.flipY = false;
+            _texture.sRGBEncoding = THREE.sRGBEncoding;
+          }
+        }
+      } catch (err) {
+        _iterator3.e(err);
+      } finally {
+        _iterator3.f();
+      }
+    }
+
+    emptying(textures360);
+    emptying(textures360_daylight);
+    emptying(textures360_night);
+    emptying(textures360_depth); // Create raycast object
+
+    var _iterator4 = _createForOfIteratorHelper(pet_array),
+        _step4;
+
+    try {
+      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+        var ob = _step4.value;
+        object_ray_array.push(ob);
+      }
+    } catch (err) {
+      _iterator4.e(err);
+    } finally {
+      _iterator4.f();
+    }
+
+    var _iterator5 = _createForOfIteratorHelper(room_array),
+        _step5;
+
+    try {
+      for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+        var _ob = _step5.value;
+        object_ray_array.push(_ob);
+      }
+    } catch (err) {
+      _iterator5.e(err);
+    } finally {
+      _iterator5.f();
+    }
+  }, 1000);
 }, // Progress
 function (item_url, item_loaded, item_total) {
   var progress_ratio = item_loaded / item_total;
@@ -45141,20 +45224,32 @@ var wasd_mode = false;
 var wasd_element = document.querySelector('#wasd');
 
 wasd_element.onclick = function () {
-  wasd_mode = true;
-  position_x = camera.position.x;
-  position_z = camera.position.z;
-  material_360_1.uniforms.u_displace.value = -displace_strength;
-  material_360_2.uniforms.u_displace.value = -displace_strength;
-  canvas.requestPointerLock();
-  cursor_material.uniforms.u_opacity.value = 0;
+  if (!is_transitioning) {
+    wasd_mode = true;
+    camera.fov = 90;
+    position_x = camera.position.x;
+    position_z = camera.position.z;
 
-  if (canvas.requestFullscreen) {
-    canvas.requestFullscreen();
-  } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen();
-  } else if (canvas.msRequestFullscreen) {
-    canvas.msRequestFullscreen();
+    if (flip_flop % 2 == 0) {
+      material_360_1.depthWrite = true;
+      material_360_2.depthWrite = false;
+    } else {
+      material_360_2.depthWrite = true;
+      material_360_1.depthWrite = false;
+    }
+
+    material_360_1.uniforms.u_displace.value = -displace_strength;
+    material_360_2.uniforms.u_displace.value = -displace_strength;
+    canvas.requestPointerLock();
+    cursor_material.uniforms.u_opacity.value = 0;
+
+    if (canvas.requestFullscreen) {
+      canvas.requestFullscreen();
+    } else if (canvas.webkitRequestFullscreen) {
+      canvas.webkitRequestFullscreen();
+    } else if (canvas.msRequestFullscreen) {
+      canvas.msRequestFullscreen();
+    }
   }
 };
 
@@ -45166,6 +45261,11 @@ document.addEventListener('MSFullscreenChange', exitHandler);
 function exitHandler() {
   if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
     wasd_mode = false;
+    camera.fov = 80;
+    material_360_1.depthWrite = false;
+    material_360_2.depthWrite = false;
+    material_360_1.uniforms.u_displace.value = 0;
+    material_360_2.uniforms.u_displace.value = 0;
     cursor_material.uniforms.u_opacity.value = 1;
   }
 }
@@ -45186,7 +45286,7 @@ var sizes = {
 
 var scene = new THREE.Scene(); // Camera
 
-var camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.01, 100);
+var camera = new THREE.PerspectiveCamera(80, sizes.width / sizes.height, 0.01, 100);
 camera.rotation.order = 'YXZ';
 camera.position.x = base_position.x;
 camera.position.y = base_position.y;
@@ -45213,31 +45313,14 @@ canvas.addEventListener('mouseover', function (event) {
 canvas.addEventListener('mouseout', function (event) {
   is_mouse_on_DOM = false;
 });
-
-function texture_update() {
-  texture_base_color = textures360[coordinates];
-  texture_base_color.minFilter = THREE.NearestFilter;
-  texture_base_color.generateMipmaps = false;
-  texture_base_color.flipY = false;
-  texture_base_color.sRGBEncoding = THREE.sRGBEncoding;
-  texture_depth = textures360_depth[coordinates];
-  texture_depth.minFilter = THREE.NearestFilter;
-  texture_depth.generateMipmaps = false;
-  texture_depth.flipY = false;
-  row = Math.ceil(coordinates / increment);
-  odd_even_number = row % 2;
-}
 /**
  * Textures
  */
 // 360 Texture
 
-
 var textures360 = [];
 var textures360_daylight = [];
 var textures360_night = [];
-var textures360_depth1 = [];
-var textures360_depth2 = [];
 var textures360_depth = []; // Daylight
 
 for (var i = 1; i <= increment * increment; i++) {
@@ -45265,7 +45348,7 @@ for (var _i2 = 1; _i2 <= increment * increment; _i2++) {
 
   var _update_filename2 = filename_depth.substring(0, filename_depth.length - _image_number2.length) + _image_number2;
 
-  var _final_filename2 = _update_filename2 + '.webp';
+  var _final_filename2 = _update_filename2 + '.png';
 
   textures360_depth[_i2] = texture_loader.load(_final_filename2);
 } //Load textures
@@ -45337,7 +45420,7 @@ var material_360_2 = new THREE.ShaderMaterial((_THREE$ShaderMaterial2 = {
       value: texture_base_color
     },
     u_alpha: {
-      value: 1
+      value: 0
     },
     u_mix: {
       value: 0
@@ -45364,7 +45447,7 @@ shadow_material.opacity = 0.2; // Transparent Material
 var transparent_material = new THREE.MeshStandardMaterial({
   transparent: true,
   wireframe: true,
-  opacity: 0.1
+  opacity: 0.2
 });
 /**
  * Models
@@ -45382,26 +45465,26 @@ pet_lighting.shadow.radius = 15;
 pet_object.add(pet_lighting);
 var mixer;
 gltf_loader.load('/gltf/Pet2.glb', function (gltf) {
-  var _iterator2 = _createForOfIteratorHelper(gltf.scene.children),
-      _step2;
+  var _iterator6 = _createForOfIteratorHelper(gltf.scene.children),
+      _step6;
 
   try {
-    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-      var children = _step2.value;
+    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+      var children = _step6.value;
       pet_array.push(children);
       children.castShadow = true;
       children.receiveShadow = true;
       children.material = pet_material;
     }
   } catch (err) {
-    _iterator2.e(err);
+    _iterator6.e(err);
   } finally {
-    _iterator2.f();
+    _iterator6.f();
   }
 
   var model = gltf.scene;
   var animations = gltf.animations;
-  model.scale.set(0.25, 0.25, 0.25);
+  model.scale.set(0.1, 0.1, 0.1);
   mixer = new THREE.AnimationMixer(model);
   mixer.timeScale = 1;
   var action_eye_movement = mixer.clipAction(animations[0]);
@@ -45424,12 +45507,12 @@ gltf_loader.load('/gltf/Pet2.glb', function (gltf) {
 
 var room_array = [];
 gltf_loader.load('/gltf/Room.glb', function (gltf) {
-  var _iterator3 = _createForOfIteratorHelper(gltf.scene.children),
-      _step3;
+  var _iterator7 = _createForOfIteratorHelper(gltf.scene.children),
+      _step7;
 
   try {
-    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-      var children = _step3.value;
+    for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+      var children = _step7.value;
 
       if (!(children.name.toLowerCase() == 'boundary')) {
         children.receiveShadow = true;
@@ -45440,16 +45523,16 @@ gltf_loader.load('/gltf/Room.glb', function (gltf) {
       room_array.push(children);
     }
   } catch (err) {
-    _iterator3.e(err);
+    _iterator7.e(err);
   } finally {
-    _iterator3.f();
+    _iterator7.f();
   }
 
   scene.add(gltf.scene);
 }); // Sphere Object
 //Sphere 1
 
-var sphere_mesh1 = new THREE.Mesh(new THREE.SphereGeometry(displace_strength, 256, 256), material_360_1);
+var sphere_mesh1 = new THREE.Mesh(new THREE.SphereGeometry(15, 512, 512), material_360_1);
 sphere_mesh1.scale.y = -1;
 sphere_mesh1.scale.x = -1;
 sphere_mesh1.rotation.y = Math.PI * -0.5;
@@ -45458,7 +45541,7 @@ sphere_mesh1.position.y = base_position.y;
 sphere_mesh1.position.z = base_position.z;
 scene.add(sphere_mesh1); //Sphere 2
 
-var sphere_mesh2 = new THREE.Mesh(new THREE.SphereGeometry(displace_strength, 256, 256), material_360_2);
+var sphere_mesh2 = new THREE.Mesh(new THREE.SphereGeometry(15, 512, 512), material_360_2);
 sphere_mesh2.scale.y = -1;
 sphere_mesh2.scale.x = -1;
 sphere_mesh2.rotation.y = Math.PI * -0.5;
@@ -45487,9 +45570,10 @@ var is_light_on = false;
 var light_switch = document.getElementById('light-switch');
 
 light_switch.onclick = function () {
-  if (is_light_on == false) {
+  if (!is_light_on && !is_transitioning) {
     // to Night
     is_light_on = true;
+    is_transitioning = true;
     duration = 3;
 
     _gsap.default.to(ambient_light.color, {
@@ -45517,50 +45601,137 @@ light_switch.onclick = function () {
       textures360[_i4] = textures360_night[_i4];
     }
 
-    var texture_base_color1 = textures360[coordinates];
-    texture_base_color1.flipY = false;
-    texture_base_color1.sRGBEncoding = THREE.sRGBEncoding;
-    var texture_base_color2 = textures360[coordinates];
-    texture_base_color2.flipY = false;
-    texture_base_color2.sRGBEncoding = THREE.sRGBEncoding;
-    texture_update();
-  } else {
+    texture_base_color = textures360[coordinates];
+    texture_depth = textures360_depth[coordinates];
+
+    if (flip_flop % 2 == 0) {
+      sphere_mesh2.position.x = camera.position.x;
+      sphere_mesh2.position.z = camera.position.z;
+      material_360_2.depthWrite = true;
+      material_360_1.depthWrite = false;
+      material_360_2.uniforms.u_texture_depth.value = texture_depth;
+      material_360_2.uniforms.u_texture_base_color.value = texture_base_color;
+
+      _gsap.default.to(material_360_2.uniforms.u_alpha, {
+        duration: 3,
+        value: 1,
+        delay: 0
+      });
+
+      _gsap.default.to(material_360_1.uniforms.u_alpha, {
+        duration: 1.5,
+        value: 0,
+        delay: 1.5,
+        onComplete: function onComplete() {
+          is_transitioning = false;
+        }
+      });
+
+      flip_flop += 1;
+    } else {
+      sphere_mesh1.position.x = camera.position.x;
+      sphere_mesh1.position.z = camera.position.z;
+      material_360_1.depthWrite = true;
+      material_360_2.depthWrite = false;
+      material_360_1.uniforms.u_texture_depth.value = texture_depth;
+      material_360_1.uniforms.u_texture_base_color.value = texture_base_color;
+
+      _gsap.default.to(material_360_1.uniforms.u_alpha, {
+        duration: 3,
+        value: 1,
+        delay: 0
+      });
+
+      _gsap.default.to(material_360_2.uniforms.u_alpha, {
+        duration: 1.5,
+        value: 0,
+        delay: 1.5,
+        onComplete: function onComplete() {
+          is_transitioning = false;
+        }
+      });
+
+      flip_flop += 1;
+    }
+  } else if (is_light_on && !is_transitioning) {
     // to Daylight
     is_light_on = false;
+    is_transitioning = true;
     duration = 3;
 
     _gsap.default.to(ambient_light.color, {
-      r: 98 / 255,
-      g: 82 / 255,
-      b: 67 / 255,
+      r: 37 / 255,
+      g: 35 / 255,
+      b: 49 / 255,
       duration: duration
     });
 
     _gsap.default.to(pet_lighting.color, {
-      r: 138 / 255,
-      g: 127 / 255,
-      b: 109 / 255,
+      r: 54 / 255,
+      g: 44 / 255,
+      b: 43 / 255,
       duration: duration
     });
 
     _gsap.default.to(pet_material, {
-      envMapIntensity: 0.2,
+      envMapIntensity: 0.1,
       duration: duration
     });
 
-    pet_material.envMap = env_texture_night;
+    pet_material.envMap = env_texture_daylight;
 
     for (var _i5 = 1; _i5 <= increment * increment; _i5++) {
       textures360[_i5] = textures360_daylight[_i5];
     }
 
-    var _texture_base_color = textures360[coordinates];
-    _texture_base_color.flipY = false;
-    _texture_base_color.sRGBEncoding = THREE.sRGBEncoding;
-    var _texture_base_color2 = textures360[coordinates];
-    _texture_base_color2.flipY = false;
-    _texture_base_color2.sRGBEncoding = THREE.sRGBEncoding;
-    texture_update();
+    texture_base_color = textures360[coordinates];
+    texture_depth = textures360_depth[coordinates];
+
+    if (flip_flop % 2 == 0) {
+      sphere_mesh2.position.x = camera.position.x;
+      sphere_mesh2.position.z = camera.position.z;
+      material_360_2.uniforms.u_texture_depth.value = texture_depth;
+      material_360_2.uniforms.u_texture_base_color.value = texture_base_color;
+
+      _gsap.default.to(material_360_2.uniforms.u_alpha, {
+        duration: 3,
+        value: 1,
+        delay: 0
+      });
+
+      _gsap.default.to(material_360_1.uniforms.u_alpha, {
+        duration: 1.5,
+        value: 0,
+        delay: 1.5,
+        onComplete: function onComplete() {
+          is_transitioning = false;
+        }
+      });
+
+      flip_flop += 1;
+    } else {
+      sphere_mesh1.position.x = camera.position.x;
+      sphere_mesh1.position.z = camera.position.z;
+      material_360_1.uniforms.u_texture_depth.value = texture_depth;
+      material_360_1.uniforms.u_texture_base_color.value = texture_base_color;
+
+      _gsap.default.to(material_360_1.uniforms.u_alpha, {
+        duration: 3,
+        value: 1,
+        delay: 0
+      });
+
+      _gsap.default.to(material_360_2.uniforms.u_alpha, {
+        duration: 1.5,
+        value: 0,
+        delay: 1.5,
+        onComplete: function onComplete() {
+          is_transitioning = false;
+        }
+      });
+
+      flip_flop += 1;
+    }
   }
 }; // Fullscreen browser
 
@@ -45570,17 +45741,7 @@ var full_screen = document.getElementById('full-screen');
 var is_full_screen = false;
 
 full_screen.onclick = function () {
-  if (is_full_screen) {
-    is_full_screen = false;
-
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-  } else {
+  if (!is_full_screen) {
     is_full_screen = true;
 
     if (viewport.requestFullscreen) {
@@ -45589,6 +45750,16 @@ full_screen.onclick = function () {
       viewport.webkitRequestFullscreen();
     } else if (viewport.msRequestFullscreen) {
       viewport.msRequestFullscreen();
+    }
+  } else {
+    is_full_screen = false;
+
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
     }
   }
 }; // Disable zoom in mobile
@@ -45638,10 +45809,12 @@ var sound_element1 = document.getElementById('sound-mute');
 
 sound_element1.onclick = function () {
   if (is_sound_on == false) {
+    sound_element1.classList.replace('fa-volume-off', 'fa-volume-up');
     is_sound_on = true;
     bgm.loop = true;
     bgm.play();
   } else {
+    sound_element1.classList.replace('fa-volume-up', 'fa-volume-off');
     is_sound_on = false;
     bgm.pause();
   }
@@ -45656,18 +45829,13 @@ window.setInterval(function () {
   var forward = camera.getWorldDirection(new THREE.Vector3());
   var right = camera.getWorldDirection(new THREE.Vector3()).cross(camera.up);
   var update_pet_position = new THREE.Vector3();
-  update_pet_position.x = sphere_mesh1.position.x + forward.x + right.x * 0.5;
-  update_pet_position.y = sphere_mesh1.position.y + forward.y + right.y - 0.5;
-  update_pet_position.z = sphere_mesh1.position.z + forward.z + right.z * 0.5;
+  update_pet_position.x = camera.position.x + forward.x + right.x * 1;
+  update_pet_position.y = camera.position.y + forward.y + right.y * 1;
+  update_pet_position.z = camera.position.z + forward.z + right.z * 1;
 
   _gsap.default.to(pet_object.position, {
     x: update_pet_position.x,
-    duration: 2
-  });
-
-  update_pet_position.y = 1.7;
-
-  _gsap.default.to(pet_object.position, {
+    y: update_pet_position.y,
     z: update_pet_position.z,
     duration: 2
   });
@@ -45675,10 +45843,7 @@ window.setInterval(function () {
 
 var chat_sound1 = new Audio('/sounds/mumbling_sound_1.mp3');
 var chat_sound2 = new Audio('/sounds/mumbling_sound_2.mp3');
-var chat_sound3 = new Audio('/sounds/mumbling_sound_3.mp3'); // chat_sound1.loop = true
-// chat_sound2.loop = true
-// chat_sound3.loop = true
-
+var chat_sound3 = new Audio('/sounds/mumbling_sound_3.mp3');
 var chat_box = document.querySelector('div.chat-box');
 var chat_content = document.querySelector('p.chat-content');
 var button_next = document.getElementById('button-next');
@@ -45691,14 +45856,23 @@ chat_sounds_array[1] = chat_sound2;
 chat_sounds_array[2] = chat_sound3;
 chat_array[0] = 'Halo semua, saya adalah monyet blender';
 chat_array[1] = 'Pada kesempatan kali ini, kita lolololo';
-chat_array[2] = 'yagitu';
-var count = 0; // Start dialog box
+chat_array[2] = 'yagitu'; // Start dialog box
 
-canvas.addEventListener('click', function (event) {
+window.addEventListener('mousedown', function () {
+  dragged = false;
+});
+window.addEventListener('mousemove', function () {
+  dragged = true;
+});
+window.addEventListener('mouseup', function (event) {
+  if (dragged == true) {
+    return;
+  }
+
   mouse_pet.x = event.offsetX / sizes.width * 2 - 1;
   mouse_pet.y = -(event.offsetY / sizes.height) * 2 + 1;
   raycaster_mouse.setFromCamera(mouse_pet, camera);
-  var intersect_pet = raycaster_mouse.intersectObjects(pet_array);
+  var intersect_pet = raycaster_mouse.intersectObjects(pet_array, true);
 
   if (intersect_pet.length > 0) {
     chat_box.style.transform = "scale(1)";
@@ -45794,10 +45968,39 @@ var velocity = new THREE.Vector3();
 var direction = new THREE.Vector3();
 var position_x = camera.position.x;
 var position_z = camera.position.z;
+var pos_x = camera.position.x;
+var pos_z = camera.position.z;
+var iddle_timeout = 0;
 
 function tick() {
   var delta_time = clock.getDelta();
-  var elapsed_time = clock.getElapsedTime();
+  var elapsed_time = clock.getElapsedTime(); // Reset camera position if iddle
+
+  var current_pos_x = camera.position.x;
+  var current_pos_z = camera.position.z;
+  var delta_pos_x = current_pos_x - pos_x;
+  var delta_pos_z = current_pos_z - pos_z;
+  pos_x = current_pos_x;
+  pos_z = current_pos_z;
+
+  if (Math.abs(delta_pos_z + delta_pos_x) < 0.005) {
+    iddle_timeout += 1;
+  } else {
+    iddle_timeout = 0;
+  }
+
+  if (iddle_timeout == 50) {
+    is_transitioning = true;
+
+    _gsap.default.to(camera.position, {
+      x: Math.round(camera.position.x),
+      z: Math.round(camera.position.z),
+      duration: 1,
+      onComplete: function onComplete() {
+        is_transitioning = false;
+      }
+    });
+  }
 
   if (wasd_mode) {
     // WASD Controller
@@ -45810,7 +46013,7 @@ function tick() {
     if (moveForward || moveBackward) velocity.z -= direction.z * 10.0 * delta_time;
     if (moveLeft || moveRight) velocity.x -= direction.x * 10.0 * delta_time;
     pointer_lock_control.moveRight(-velocity.x * delta_time);
-    pointer_lock_control.moveForward(-velocity.z * delta_time); // WASD Changing Image
+    pointer_lock_control.moveForward(-velocity.z * delta_time); // WASD Changing Image Variable
 
     var current_position_x = Math.round(camera.position.x);
     var current_position_z = Math.round(camera.position.z);
@@ -45819,60 +46022,41 @@ function tick() {
     position_x = current_position_x;
     position_z = current_position_z;
 
-    if (delta_position_x !== 0 || delta_position_z !== 0) {
-      coordinates = coordinates + delta_position_x * grid - delta_position_z * increment;
-      texture_base_color = textures360[coordinates];
-      texture_base_color.minFilter = THREE.NearestFilter;
-      texture_base_color.generateMipmaps = false;
-      texture_base_color.flipY = false;
-      texture_base_color.sRGBEncoding = THREE.sRGBEncoding;
-      texture_depth = textures360_depth[coordinates];
-      texture_depth.minFilter = THREE.NearestFilter;
-      texture_depth.generateMipmaps = false;
-      texture_depth.flipY = false;
+    try {
+      if (delta_position_x !== 0 || delta_position_z !== 0) {
+        coordinates = coordinates + delta_position_x * grid - delta_position_z * increment;
+        texture_base_color = textures360[coordinates];
+        texture_depth = textures360_depth[coordinates];
 
-      if (texture_base_color.image && texture_depth.image) {
-        if (flip_flop % 2 == 0) {
-          material_360_2.uniforms.u_texture_base_color.value = texture_base_color;
-          material_360_2.uniforms.u_texture_depth.value = texture_depth;
-          sphere_mesh2.position.x = Math.round(camera.position.x);
-          sphere_mesh2.position.z = Math.round(camera.position.z);
+        if (texture_base_color.image && texture_depth.image && !is_transitioning) {
+          is_transitioning = true;
 
-          _gsap.default.to(material_360_2.uniforms.u_alpha, {
-            duration: 0.2,
-            value: 1,
-            delay: 0
-          });
-
-          _gsap.default.to(material_360_1.uniforms.u_alpha, {
-            duration: 0,
-            value: 0,
-            delay: 0.2
-          });
-
-          flip_flop += 1;
-        } else {
-          material_360_1.uniforms.u_texture_base_color.value = texture_base_color;
-          material_360_1.uniforms.u_texture_depth.value = texture_depth;
-          sphere_mesh1.position.x = Math.round(camera.position.x);
-          sphere_mesh1.position.z = Math.round(camera.position.z);
-
-          _gsap.default.to(material_360_1.uniforms.u_alpha, {
-            duration: 0.2,
-            value: 1,
-            delay: 0
-          });
-
-          _gsap.default.to(material_360_2.uniforms.u_alpha, {
-            duration: 0,
-            value: 0,
-            delay: 0.2
-          });
-
-          flip_flop += 1;
+          if (flip_flop % 2 == 0) {
+            material_360_2.uniforms.u_texture_base_color.value = texture_base_color;
+            material_360_2.uniforms.u_texture_depth.value = texture_depth;
+            material_360_2.depthWrite = true;
+            material_360_1.depthWrite = false;
+            sphere_mesh2.position.x = Math.round(camera.position.x);
+            sphere_mesh2.position.z = Math.round(camera.position.z);
+            material_360_2.uniforms.u_alpha.value = 1;
+            material_360_1.uniforms.u_alpha.value = 0;
+            is_transitioning = false;
+            flip_flop += 1;
+          } else {
+            material_360_1.uniforms.u_texture_base_color.value = texture_base_color;
+            material_360_1.uniforms.u_texture_depth.value = texture_depth;
+            material_360_1.depthWrite = true;
+            material_360_2.depthWrite = false;
+            sphere_mesh1.position.x = Math.round(camera.position.x);
+            sphere_mesh1.position.z = Math.round(camera.position.z);
+            material_360_1.uniforms.u_alpha.value = 1;
+            material_360_2.uniforms.u_alpha.value = 0;
+            is_transitioning = false;
+            flip_flop += 1;
+          }
         }
       }
-    }
+    } catch (err) {}
   } // Update 360 material
 
 
@@ -45881,7 +46065,7 @@ function tick() {
 
   mixer.update(delta_time); // Pet Behaviour
 
-  pet_object.lookAt(new THREE.Vector3(sphere_mesh1.position.x, sphere_mesh1.position.y - 0.4, sphere_mesh1.position.z));
+  pet_object.lookAt(new THREE.Vector3(camera.position.x, camera.position.y - 0.4, camera.position.z));
   pet_object.position.y += Math.sin(elapsed_time) * 0.003;
   pet_object.position.x += Math.sin(elapsed_time * 0.7) * 0.005;
   pet_object.position.z += Math.cos(elapsed_time) * 0.003; // Update device orientation
@@ -45895,30 +46079,39 @@ function tick() {
   cursor_material.uniforms.u_wave.value = Math.sin(wave_sine); // Update Raycaster
 
   raycaster_mouse.setFromCamera(mouse, camera);
-  var intersects = raycaster_mouse.intersectObjects(room_array);
+  var intersects = raycaster_mouse.intersectObjects(object_ray_array, true);
 
-  var _iterator4 = _createForOfIteratorHelper(intersects),
-      _step4;
+  var _iterator8 = _createForOfIteratorHelper(intersects),
+      _step8;
 
   try {
-    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-      var intersect = _step4.value;
+    for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
+      var intersect = _step8.value;
 
       //Update Plane
       if (intersects.length > 0) {
-        plane_mesh.rotation.x = Math.PI * intersects[0].face.normal.y * 0.5;
-        plane_mesh.rotation.y = Math.PI * intersects[0].face.normal.x * 0.5;
-        plane_mesh.rotation.z = Math.PI * intersects[0].face.normal.z * 0.5;
-        plane_mesh.position.x = intersects[0].point.x;
-        plane_mesh.position.y = intersects[0].point.y;
-        plane_mesh.position.z = intersects[0].point.z;
+        if (intersects[0].object.type == 'Mesh') {
+          is_mouse_on_pet = false;
+          plane_mesh.rotation.x = Math.PI * intersects[0].face.normal.y * 0.5;
+          plane_mesh.rotation.y = Math.PI * intersects[0].face.normal.x * 0.5;
+          plane_mesh.rotation.z = Math.PI * intersects[0].face.normal.z * 0.5;
+          plane_mesh.position.x = intersects[0].point.x;
+          plane_mesh.position.y = intersects[0].point.y;
+          plane_mesh.position.z = intersects[0].point.z;
+        } else if (intersects[0].object.type == 'SkinnedMesh') {
+          is_mouse_on_pet = true;
+          plane_mesh.lookAt(camera.position);
+          plane_mesh.position.x = pet_object.position.x;
+          plane_mesh.position.y = pet_object.position.y + 0.2;
+          plane_mesh.position.z = pet_object.position.z;
+        }
       }
     } // Update Renderer
 
   } catch (err) {
-    _iterator4.e(err);
+    _iterator8.e(err);
   } finally {
-    _iterator4.f();
+    _iterator8.f();
   }
 
   renderer.render(scene, camera);
@@ -45928,26 +46121,26 @@ function tick() {
 
 var is_transitioning = false;
 var dragged = false;
-var is_mouse_on_icon = false;
-var icons = document.querySelectorAll('.icon');
+var is_mouse_on_button = false;
+var button_element = document.querySelectorAll('.button');
 
-var _iterator5 = _createForOfIteratorHelper(icons),
-    _step5;
+var _iterator9 = _createForOfIteratorHelper(button_element),
+    _step9;
 
 try {
-  for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
-    var icon = _step5.value;
-    icon.addEventListener('mouseover', function () {
-      is_mouse_on_icon = true;
+  for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+    var button = _step9.value;
+    button.addEventListener('mouseover', function () {
+      is_mouse_on_button = true;
     });
-    icon.addEventListener('mouseout', function () {
-      is_mouse_on_icon = false;
+    button.addEventListener('mouseout', function () {
+      is_mouse_on_button = false;
     });
   }
 } catch (err) {
-  _iterator5.e(err);
+  _iterator9.e(err);
 } finally {
-  _iterator5.f();
+  _iterator9.f();
 }
 
 window.addEventListener('mousedown', function () {
@@ -45962,106 +46155,92 @@ window.addEventListener('mouseup', function () {
   } // Update Raycaster
 
 
-  var intersects = raycaster_mouse.intersectObjects(room_array);
+  var intersects = raycaster_mouse.intersectObjects(room_array, true);
 
-  var _iterator6 = _createForOfIteratorHelper(intersects),
-      _step6;
+  var _iterator10 = _createForOfIteratorHelper(intersects),
+      _step10;
 
   try {
-    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
-      var intersect = _step6.value;
+    for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
+      var intersect = _step10.value;
 
       // Teleport to object raycast
-      if (intersect.object.name.toLowerCase() != 'boundary' && !is_transitioning && !wasd_mode && !is_mouse_on_icon) {
-        var hit_x = Math.round(intersects[0].point.x);
-        var hit_z = Math.round(intersects[0].point.z);
-        coordinates = base_coordinate + (hit_x - base_position.x) * grid - (hit_z - base_position.z) * increment;
-        texture_base_color = textures360[coordinates];
-        texture_base_color.minFilter = THREE.NearestFilter;
-        texture_base_color.generateMipmaps = false;
-        texture_base_color.flipY = false;
-        texture_base_color.sRGBEncoding = THREE.sRGBEncoding;
-        texture_depth = textures360_depth[coordinates];
-        texture_depth.minFilter = THREE.NearestFilter;
-        texture_depth.generateMipmaps = false;
-        texture_depth.flipY = false;
-        duration = 1;
+      try {
+        if (intersect.object.name.toLowerCase() != 'boundary' && !is_transitioning && !wasd_mode && !is_mouse_on_button && !is_mouse_on_pet) {
+          var hit_x = Math.round(intersects[0].point.x);
+          var hit_z = Math.round(intersects[0].point.z);
+          coordinates = base_coordinate + (hit_x - base_position.x) * grid - (hit_z - base_position.z) * increment;
+          texture_base_color = textures360[coordinates];
+          texture_depth = textures360_depth[coordinates];
 
-        if (texture_base_color.image && texture_depth.image) {
-          is_transitioning = true;
-          material_360_1.uniforms.u_displace.value = -displace_strength;
-          material_360_2.uniforms.u_displace.value = -displace_strength;
+          if (texture_base_color.image && texture_depth.image) {
+            is_transitioning = true;
+            material_360_1.uniforms.u_displace.value = -displace_strength;
+            material_360_2.uniforms.u_displace.value = -displace_strength;
 
-          _gsap.default.to(camera.position, {
-            x: hit_x,
-            z: hit_z,
-            duration: 2
-          });
-
-          if (flip_flop % 2 == 0) {
-            material_360_2.uniforms.u_texture_base_color.value = texture_base_color;
-            material_360_2.uniforms.u_texture_depth.value = texture_depth;
-            sphere_mesh2.position.x = hit_x;
-            sphere_mesh2.position.z = hit_z;
-
-            _gsap.default.to(material_360_2.uniforms.u_displace, {
-              duration: 0.1,
-              value: 0,
-              delay: 1.8
+            _gsap.default.to(camera.position, {
+              x: hit_x,
+              z: hit_z,
+              duration: 2
             });
 
-            _gsap.default.to(material_360_2.uniforms.u_alpha, {
-              duration: 1,
-              value: 1,
-              delay: 0.5
-            });
+            if (flip_flop % 2 == 0) {
+              material_360_2.uniforms.u_texture_base_color.value = texture_base_color;
+              material_360_2.uniforms.u_texture_depth.value = texture_depth;
+              material_360_2.depthWrite = true;
+              material_360_1.depthWrite = false;
+              sphere_mesh2.position.x = hit_x;
+              sphere_mesh2.position.z = hit_z;
 
-            _gsap.default.to(material_360_1.uniforms.u_alpha, {
-              duration: 1,
-              value: 0,
-              delay: 1,
-              onComplete: function onComplete() {
-                is_transitioning = false;
-              }
-            });
+              _gsap.default.to(material_360_2.uniforms.u_alpha, {
+                duration: 1,
+                value: 1,
+                delay: 0.5
+              });
 
-            flip_flop += 1;
-          } else {
-            material_360_1.uniforms.u_texture_base_color.value = texture_base_color;
-            material_360_1.uniforms.u_texture_depth.value = texture_depth;
-            sphere_mesh1.position.x = hit_x;
-            sphere_mesh1.position.z = hit_z;
+              _gsap.default.to(material_360_1.uniforms.u_alpha, {
+                duration: 0.5,
+                value: 0,
+                delay: 1,
+                onComplete: function onComplete() {
+                  is_transitioning = false;
+                }
+              });
 
-            _gsap.default.to(material_360_1.uniforms.u_displace, {
-              duration: 0.1,
-              value: 0,
-              delay: 1.8
-            });
+              flip_flop += 1;
+            } else {
+              material_360_1.uniforms.u_texture_base_color.value = texture_base_color;
+              material_360_1.uniforms.u_texture_depth.value = texture_depth;
+              material_360_1.depthWrite = true;
+              material_360_2.depthWrite = false;
+              sphere_mesh1.position.x = hit_x;
+              sphere_mesh1.position.z = hit_z;
 
-            _gsap.default.to(material_360_1.uniforms.u_alpha, {
-              duration: 1,
-              value: 1,
-              delay: 0.5
-            });
+              _gsap.default.to(material_360_1.uniforms.u_alpha, {
+                duration: 1,
+                value: 1,
+                delay: 0.5
+              });
 
-            _gsap.default.to(material_360_2.uniforms.u_alpha, {
-              duration: 1,
-              value: 0,
-              delay: 1,
-              onComplete: function onComplete() {
-                is_transitioning = false;
-              }
-            });
+              _gsap.default.to(material_360_2.uniforms.u_alpha, {
+                duration: 0.5,
+                value: 0,
+                delay: 1,
+                onComplete: function onComplete() {
+                  is_transitioning = false;
+                }
+              });
 
-            flip_flop += 1;
+              flip_flop += 1;
+            }
           }
         }
-      }
+      } catch (err) {}
     }
   } catch (err) {
-    _iterator6.e(err);
+    _iterator10.e(err);
   } finally {
-    _iterator6.f();
+    _iterator10.f();
   }
 });
 /**
@@ -46110,7 +46289,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50685" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56460" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
