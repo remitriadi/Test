@@ -575,7 +575,7 @@ gltf_loader.load(
 // Sphere Object
 //Sphere 1
 const sphere_mesh1 = new THREE.Mesh(
-    new THREE.SphereGeometry(15,4096,4096),
+    new THREE.SphereGeometry(15,256,256),
     material_360_1
 )
 sphere_mesh1.scale.y = -1
@@ -588,7 +588,7 @@ scene.add(sphere_mesh1)
 
 //Sphere 2
 const sphere_mesh2 = new THREE.Mesh(
-    new THREE.SphereGeometry(15,4096,4096),
+    new THREE.SphereGeometry(15,256,256),
     material_360_2
 )
 sphere_mesh2.scale.y = -1
@@ -996,7 +996,7 @@ function tick(){
         iddle_timeout = 0
     }
 
-    if(iddle_timeout == 50){
+    if(iddle_timeout == 5000){
         is_transitioning = true
         gsap.to(camera.position, { x: Math.round(camera.position.x), z: Math.round(camera.position.z), duration: 1,onComplete:function(){
             is_transitioning = false

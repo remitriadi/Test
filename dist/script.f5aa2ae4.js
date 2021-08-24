@@ -45552,7 +45552,7 @@ gltf_loader.load('/gltf/Room.glb', function (gltf) {
 }); // Sphere Object
 //Sphere 1
 
-var sphere_mesh1 = new THREE.Mesh(new THREE.SphereGeometry(15, 4096, 4096), material_360_1);
+var sphere_mesh1 = new THREE.Mesh(new THREE.SphereGeometry(15, 256, 256), material_360_1);
 sphere_mesh1.scale.y = -1;
 sphere_mesh1.scale.x = -1;
 sphere_mesh1.rotation.y = Math.PI * -0.5;
@@ -45561,7 +45561,7 @@ sphere_mesh1.position.y = base_position.y;
 sphere_mesh1.position.z = base_position.z;
 scene.add(sphere_mesh1); //Sphere 2
 
-var sphere_mesh2 = new THREE.Mesh(new THREE.SphereGeometry(15, 4096, 4096), material_360_2);
+var sphere_mesh2 = new THREE.Mesh(new THREE.SphereGeometry(15, 256, 256), material_360_2);
 sphere_mesh2.scale.y = -1;
 sphere_mesh2.scale.x = -1;
 sphere_mesh2.rotation.y = Math.PI * -0.5;
@@ -46009,7 +46009,7 @@ function tick() {
     iddle_timeout = 0;
   }
 
-  if (iddle_timeout == 50) {
+  if (iddle_timeout == 5000) {
     is_transitioning = true;
 
     _gsap.default.to(camera.position, {
@@ -46309,7 +46309,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52003" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50785" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
