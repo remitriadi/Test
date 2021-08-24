@@ -5,6 +5,9 @@ import { DeviceOrientationControls } from 'three/examples/jsm/controls/DeviceOri
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js'
 import { Raycaster, Vector3 } from 'three'
 
+const fs = require('fs')
+
+console.log(fs)
 
 /**
  * Base !!IMPORTANT
@@ -270,35 +273,27 @@ for(let i = 1; i <= (increment * increment); i++){
     const image_number = String(i)
     const update_filename = filename_daylight.substring(0, filename_daylight.length - image_number.length) + image_number
     const final_filename = update_filename + '.webp'
-    textures360_daylight[i] = texture_loader.load(
-        final_filename,
-        function(){
-            textures360[i] = textures360_daylight[i]
-        },
-        undefined,
-        function(err){
-            console.log('error')
-        }
-        ) 
-    
+    try{
+        textures360_daylight[i] = texture_loader.load(final_filename) 
+    }
+    catch(err){
+        break
+    }
+    textures360[i] = textures360_daylight[i]
 }
+
 
 //Night
 for(let i = 1; i <= (increment * increment); i++){
     const image_number = String(i)
     const update_filename = filename_night.substring(0, filename_night.length - image_number.length) + image_number
     const final_filename = update_filename + '.webp'
-    textures360_night[i] = texture_loader_wo_load.load(final_filename) 
-    textures360_night[i] = texture_loader_wo_load.load(
-        final_filename,
-        function(){
-            console.log('yes')
-        },
-        undefined,
-        function(err){
-            console.log('error')
-        }
-        )  
+    try{
+        textures360_night[i] = texture_loader_wo_load.load(final_filename)  
+    }
+    catch(err){
+        break
+    }
 }
 
 //Depth
@@ -306,16 +301,12 @@ for(let i = 1; i <= (increment * increment); i++){
     const image_number = String(i)
     const update_filename = filename_depth.substring(0, filename_depth.length - image_number.length) + image_number
     const final_filename = update_filename + '.png'
-    textures360_depth[i] = texture_loader.load(
-        final_filename,
-        function(){
-            textures360[i] = textures360_depth[i]
-        },
-        undefined,
-        function(err){
-            console.log('error')
-        }
-        )  
+    try{
+        textures360_depth[i] = texture_loader.load(final_filename)
+    }
+    catch(err){
+        break
+    }
 }
 
 //Load textures
@@ -584,7 +575,7 @@ gltf_loader.load(
 // Sphere Object
 //Sphere 1
 const sphere_mesh1 = new THREE.Mesh(
-    new THREE.SphereGeometry(15,512,512),
+    new THREE.SphereGeometry(15,4096,4096),
     material_360_1
 )
 sphere_mesh1.scale.y = -1
@@ -597,7 +588,7 @@ scene.add(sphere_mesh1)
 
 //Sphere 2
 const sphere_mesh2 = new THREE.Mesh(
-    new THREE.SphereGeometry(15,512,512),
+    new THREE.SphereGeometry(15,4096,4096),
     material_360_2
 )
 sphere_mesh2.scale.y = -1
