@@ -5,10 +5,6 @@ import { DeviceOrientationControls } from 'three/examples/jsm/controls/DeviceOri
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js'
 import { Raycaster, Vector3 } from 'three'
 
-const fs = require('fs')
-
-console.log(fs)
-
 /**
  * Base !!IMPORTANT
  */
@@ -267,6 +263,13 @@ const textures360 = []
 const textures360_daylight = []
 const textures360_night = []
 const textures360_depth = []
+
+
+
+const x = texture_loader.load('231ss',function(a){
+    console.log(a)
+})
+// console.log(x)
 
 // Daylight
 for(let i = 1; i <= (increment * increment); i++){

@@ -45001,9 +45001,7 @@ class PointerLockControls extends _three.EventDispatcher {
 }
 
 exports.PointerLockControls = PointerLockControls;
-},{"three":"../node_modules/three/build/three.module.js"}],"../node_modules/parcel-bundler/src/builtins/_empty.js":[function(require,module,exports) {
-
-},{}],"../js/script.js":[function(require,module,exports) {
+},{"three":"../node_modules/three/build/three.module.js"}],"../js/script.js":[function(require,module,exports) {
 "use strict";
 
 var THREE = _interopRequireWildcard(require("three"));
@@ -45032,13 +45030,9 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-var fs = require('fs');
-
-console.log(fs);
 /**
  * Base !!IMPORTANT
  */
-
 var canvas = document.querySelector('canvas.webgl'); //  ------------------------------------------------EDIT VARIABLE--------------------------------------------------------
 
 var displace_strength = 15;
@@ -45327,7 +45321,11 @@ canvas.addEventListener('mouseout', function (event) {
 var textures360 = [];
 var textures360_daylight = [];
 var textures360_night = [];
-var textures360_depth = []; // Daylight
+var textures360_depth = [];
+var x = texture_loader.load('231ss', function (a) {
+  console.log(a);
+}); // console.log(x)
+// Daylight
 
 for (var i = 1; i <= increment * increment; i++) {
   var image_number = String(i);
@@ -46281,7 +46279,7 @@ window.addEventListener('resize', function () {
 window.setTimeout(function () {
   tick();
 }, 2000);
-},{"three":"../node_modules/three/build/three.module.js","gsap":"../node_modules/gsap/index.js","three/examples/jsm/loaders/GLTFLoader.js":"../node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/controls/DeviceOrientationControls.js":"../node_modules/three/examples/jsm/controls/DeviceOrientationControls.js","three/examples/jsm/controls/PointerLockControls.js":"../node_modules/three/examples/jsm/controls/PointerLockControls.js","fs":"../node_modules/parcel-bundler/src/builtins/_empty.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"three":"../node_modules/three/build/three.module.js","gsap":"../node_modules/gsap/index.js","three/examples/jsm/loaders/GLTFLoader.js":"../node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/controls/DeviceOrientationControls.js":"../node_modules/three/examples/jsm/controls/DeviceOrientationControls.js","three/examples/jsm/controls/PointerLockControls.js":"../node_modules/three/examples/jsm/controls/PointerLockControls.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -46309,7 +46307,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62206" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49214" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
